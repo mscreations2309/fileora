@@ -42,6 +42,7 @@ private const val PROGRESS_INTERVAL_MS = 200L
 private const val PARTIAL_PREFIX = ".fileora-partial-"
 private const val PROGRESS_EVENT = "onTransferProgress"
 private const val HANDOFF_EVENT = "onHandoff"
+private const val REMOTE_EVENT = "onRemote"
 
 /**
  * Native storage helpers for Fileora on Android.
@@ -66,12 +67,13 @@ class FileoraStorageModule : Module() {
   private val extraction by lazy { ContentExtraction(context) }
 
   private val hotspot by lazy { HotspotLink(context) }
+  private val remote by lazy { RemoteServer(context) { body -> sendEvent(REMOTE_EVENT, body) } }
   private val handoff by lazy { Handoff(context, { hotspot.joinedNetwork }) { body -> sendEvent(HANDOFF_EVENT, body) } }
 
   override fun definition() = ModuleDefinition {
     Name("FileoraStorage")
 
-    Events(PROGRESS_EVENT, HANDOFF_EVENT)
+    Events(PROGRESS_EVENT, HANDOFF_EVENT, REMOTE_EVENT)
 
     Function("getAllFilesAccessStatus") {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -343,6 +345,43 @@ class FileoraStorageModule : Module() {
 
     Function("hotspotLeave") {
       hotspot.leave()
+    }
+
+    AsyncFunction("remoteStart") Coroutine { port: Int, devices: List<Map<String, Any?>> ->
+      withContext(Dispatchers.IO) {
+        guard("start Fileora Web") {
+          val info = remote.start(port, devices)
+          @Suppress("UNCHECKED_CAST")
+          val address = (info["addresses"] as List<String>).firstOrNull()?.let { "http://$it:${info["port"]}" }
+          RemoteService.onStopRequested = {
+            remote.stop()
+            sendEvent(REMOTE_EVENT, mapOf("type" to "stopped"))
+          }
+          RemoteService.start(context, address)
+          info
+        }
+      }
+    }
+
+    Function("remoteStop") {
+      remote.stop()
+      RemoteService.stop(context)
+    }
+
+    Function("remoteSetDevices") { devices: List<Map<String, Any?>> ->
+      remote.setDevices(devices)
+    }
+
+    Function("remoteRespond") { requestId: String, json: String ->
+      remote.respond(requestId, json)
+    }
+
+    Function("remoteResolvePairing") { pairId: String, accept: Boolean ->
+      remote.resolvePairing(pairId, accept)
+    }
+
+    Function("remoteNotifyChange") { parentUri: String? ->
+      remote.notifyChange(parentUri)
     }
 
     Function("handoffDiscard") { transferId: String ->

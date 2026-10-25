@@ -9,7 +9,16 @@
   <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
   <!-- Android 12 and older require location access to create a local-only hotspot; it is never used to locate you. -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" />
+  <!-- Fileora Web: keeps laptop access working while the phone is locked, only while the user has it on. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <application>
+    <service
+      android:name="com.fileora.storage.RemoteService"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice" />
     <provider
       android:name="com.fileora.storage.FileoraFileProvider"
       android:authorities="${applicationId}.fileora.files"

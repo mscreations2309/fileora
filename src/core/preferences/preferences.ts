@@ -31,6 +31,8 @@ export type Preferences = {
   vaultLockOnBackground: boolean;
   /** Minutes of inactivity before the vault locks. */
   vaultAutoLockMinutes: number;
+  /** Fileora Web: laptops on the same network (or this phone's hotspot) can manage files in a browser. */
+  remoteAccessEnabled: boolean;
 };
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -48,6 +50,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   indexImages: false,
   vaultLockOnBackground: true,
   vaultAutoLockMinutes: 2,
+  remoteAccessEnabled: false,
 };
 
 type PreferencesState = Preferences & {

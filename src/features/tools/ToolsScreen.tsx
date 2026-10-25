@@ -19,6 +19,7 @@ const FEATURES: Tool[] = [
   { icon: 'file-compare', title: 'Change radar', description: 'See what changed', href: '/changes', colors: ['#8B5CF6', '#3B82F6'] },
   { icon: 'graph-outline', title: 'Relationships', description: 'Connected documents', href: '/browse', colors: ['#EC4899', '#8B5CF6'] },
   { icon: 'cellphone-arrow-down', title: 'Smart handoff', description: 'Verified device transfers', href: '/handoff', colors: ['#10B981', '#0EA5E9'] },
+  { icon: 'laptop', title: 'Fileora Web', description: 'Manage files from a laptop', href: '/web', colors: ['#6366F1', '#06B6D4'] },
 ];
 
 const UTILITIES: { icon: IconName; title: string; description: string; href: Href }[] = [

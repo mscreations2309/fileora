@@ -268,6 +268,19 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 3,
+    description: 'Fileora Web: laptops approved for local browser access',
+    sql: `
+      CREATE TABLE remote_devices (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        token_hash TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        last_seen_at INTEGER
+      );
+    `,
+  },
 ];
 
 export const LATEST_SCHEMA_VERSION = migrations[migrations.length - 1]?.version ?? 0;

@@ -228,7 +228,7 @@ export async function startReceiving(destination: { uri: string; label: string }
 }
 
 /** Android needs "Nearby devices" (13+) or location (12 and older) before an app may create a hotspot. */
-async function hotspotPermission(): Promise<boolean> {
+export async function hotspotPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return false;
   const permission = (Platform.Version as number) >= 33 ? 'android.permission.NEARBY_WIFI_DEVICES' : PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
   const result = await PermissionsAndroid.request(permission as typeof PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {

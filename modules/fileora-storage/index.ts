@@ -72,9 +72,20 @@ export type HandoffEvent = {
   message?: string;
 };
 
+/** Fileora Web (laptop access) events from the phone's local server. */
+export type RemoteEvent =
+  | { type: 'request'; id: string; op: 'roots' | 'list' | 'import' | 'rename' | 'mkdir' | 'delete'; deviceId: string; deviceName: string; args: string }
+  | { type: 'pair'; pairId: string; name: string; code: string }
+  | { type: 'seen'; deviceId: string }
+  | { type: 'activity'; deviceId: string; action: 'download'; uri: string }
+  | { type: 'stopped' };
+
+export type RemoteDevice = { id: string; name: string; tokenHash: string };
+
 type FileoraStorageEvents = {
   onTransferProgress: (event: TransferProgressEvent) => void;
   onHandoff: (event: HandoffEvent) => void;
+  onRemote: (event: RemoteEvent) => void;
 };
 
 declare class FileoraStorageNativeModule extends NativeModule<FileoraStorageEvents> {
@@ -139,6 +150,16 @@ declare class FileoraStorageNativeModule extends NativeModule<FileoraStorageEven
   /** Joins another device's hotspot (Android 10+; the system asks the user to confirm). Sends then use that link. */
   hotspotJoin(ssid: string, passphrase: string): Promise<{ joined: boolean }>;
   hotspotLeave(): void;
+  /** Starts Fileora Web (local HTTP server + foreground service). Only approved devices can use it. */
+  remoteStart(port: number, devices: RemoteDevice[]): Promise<{ port: number; addresses: string[] }>;
+  remoteStop(): void;
+  remoteSetDevices(devices: RemoteDevice[]): void;
+  /** Answers a `request` event with a JSON string (`{ ok: true, ... }` or `{ ok: false, error }`). */
+  remoteRespond(requestId: string, json: string): void;
+  /** Approves or declines a laptop; returns the new device (to persist) when approved. */
+  remoteResolvePairing(pairId: string, accept: boolean): RemoteDevice | null;
+  /** Pushes a live "something changed" event to connected browsers. */
+  remoteNotifyChange(parentUri: string | null): void;
   /** PBKDF2-HMAC-SHA256; returns the derived key base64-encoded. */
   deriveKey(password: string, saltBase64: string, iterations: number, lengthBytes: number): Promise<string>;
   /** Writes a copy of a JPEG without EXIF/XMP/IPTC/comment segments. */

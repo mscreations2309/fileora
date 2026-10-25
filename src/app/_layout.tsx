@@ -12,6 +12,8 @@ import { ThemeProvider, useTheme } from '@/core/theme/ThemeProvider';
 import { useLocationsAutoRefresh } from '@/features/browse/locationsStore';
 import { OperationsPanel } from '@/features/file_operations/components/OperationsPanel';
 import { useVaultGuard } from '@/features/private_vault/VaultScreen';
+import { resumeRemoteIfEnabled } from '@/features/remote_access/remote';
+import { RemotePairingHost } from '@/features/remote_access/RemoteScreen';
 import { ToastHost } from '@/shared/components/overlays';
 
 void SplashScreen.preventAutoHideAsync();
@@ -33,6 +35,11 @@ function NavigationShell() {
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(theme.colors.background);
   }, [theme.colors.background]);
+
+  // Fileora Web stays on across restarts when the user left it on.
+  useEffect(() => {
+    resumeRemoteIfEnabled();
+  }, []);
 
   const navigationTheme = useMemo(() => {
     const base = theme.scheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -83,9 +90,11 @@ function NavigationShell() {
           <Stack.Screen name="changes" options={{ title: 'Change radar' }} />
           <Stack.Screen name="related" options={{ title: 'Related files' }} />
           <Stack.Screen name="handoff" options={{ title: 'Smart handoff' }} />
+          <Stack.Screen name="web" options={{ title: 'Fileora Web' }} />
         </Stack>
         <OperationsPanel bottomOffset={insets.bottom + BOTTOM_CHROME} />
         <ToastHost bottomOffset={insets.bottom + BOTTOM_CHROME} />
+        <RemotePairingHost />
       </View>
     </NavigationThemeProvider>
   );
