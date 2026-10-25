@@ -65,7 +65,8 @@ class FileoraStorageModule : Module() {
 
   private val extraction by lazy { ContentExtraction(context) }
 
-  private val handoff by lazy { Handoff(context) { body -> sendEvent(HANDOFF_EVENT, body) } }
+  private val hotspot by lazy { HotspotLink(context) }
+  private val handoff by lazy { Handoff(context, { hotspot.joinedNetwork }) { body -> sendEvent(HANDOFF_EVENT, body) } }
 
   override fun definition() = ModuleDefinition {
     Name("FileoraStorage")
@@ -326,6 +327,22 @@ class FileoraStorageModule : Module() {
 
     Function("handoffCancel") { sessionId: String ->
       handoff.cancelSend(sessionId)
+    }
+
+    AsyncFunction("hotspotStart") Coroutine { ->
+      withContext(Dispatchers.IO) { guard("start hotspot") { hotspot.start() } }
+    }
+
+    Function("hotspotStop") {
+      hotspot.stop()
+    }
+
+    AsyncFunction("hotspotJoin") Coroutine { ssid: String, passphrase: String ->
+      withContext(Dispatchers.IO) { guard("join hotspot") { hotspot.join(ssid, passphrase) } }
+    }
+
+    Function("hotspotLeave") {
+      hotspot.leave()
     }
 
     Function("handoffDiscard") { transferId: String ->

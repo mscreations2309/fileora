@@ -2,6 +2,13 @@
   <!-- Smart Handoff: direct device-to-device transfer on the local network, only while the user is sending or receiving. -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <!-- Direct hotspot link (no shared Wi-Fi needed): the receiver hosts a local-only hotspot, the sender joins it. -->
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+  <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
+  <!-- Android 12 and older require location access to create a local-only hotspot; it is never used to locate you. -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" />
   <application>
     <provider
       android:name="com.fileora.storage.FileoraFileProvider"

@@ -133,6 +133,12 @@ declare class FileoraStorageNativeModule extends NativeModule<FileoraStorageEven
   handoffCancel(sessionId: string): void;
   /** Deletes staged (received but not yet imported) data of a transfer. */
   handoffDiscard(transferId: string): void;
+  /** Starts a local-only hotspot (random name/password, no internet) for a direct link. */
+  hotspotStart(): Promise<{ ssid: string; passphrase: string; addresses: string[] }>;
+  hotspotStop(): void;
+  /** Joins another device's hotspot (Android 10+; the system asks the user to confirm). Sends then use that link. */
+  hotspotJoin(ssid: string, passphrase: string): Promise<{ joined: boolean }>;
+  hotspotLeave(): void;
   /** PBKDF2-HMAC-SHA256; returns the derived key base64-encoded. */
   deriveKey(password: string, saltBase64: string, iterations: number, lengthBytes: number): Promise<string>;
   /** Writes a copy of a JPEG without EXIF/XMP/IPTC/comment segments. */

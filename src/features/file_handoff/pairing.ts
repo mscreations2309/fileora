@@ -5,7 +5,8 @@
  * redirect a transfer.
  */
 
-export type HandoffTarget = { hosts: string[]; port: number; name?: string };
+/** `hotspot` is present when the receiver hosts its own hotspot: the sender joins it first (no shared Wi-Fi needed). */
+export type HandoffTarget = { hosts: string[]; port: number; name?: string; hotspot?: { ssid: string; passphrase: string } };
 
 const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 const HOSTNAME = /^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$/;
@@ -37,6 +38,7 @@ export function rankAddresses(addresses: string[]): string[] {
 export function buildPairingPayload(target: HandoffTarget): string {
   const params = [`h=${target.hosts.join(',')}`, `p=${target.port}`];
   if (target.name) params.push(`n=${encodeURIComponent(target.name)}`);
+  if (target.hotspot) params.push(`s=${encodeURIComponent(target.hotspot.ssid)}`, `k=${encodeURIComponent(target.hotspot.passphrase)}`);
   return `fileora://handoff?${params.join('&')}`;
 }
 
@@ -47,23 +49,28 @@ function fromParams(get: (key: string) => string | undefined): HandoffTarget | n
     .filter(Boolean);
   const port = Number(get('p'));
   if (hosts.length === 0 || hosts.length > 8 || !hosts.every(validHost) || !validPort(port)) return null;
-  const rawName = get('n');
-  let name: string | undefined;
-  try {
-    name = rawName ? decodeURIComponent(rawName).slice(0, 80) : undefined;
-  } catch {
-    name = undefined;
-  }
-  return { hosts, port, name };
+  const decode = (raw: string | undefined, max: number): string | undefined => {
+    try {
+      return raw ? decodeURIComponent(raw).slice(0, max) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const name = decode(get('n'), 80);
+  const ssid = decode(get('s'), 32);
+  const passphrase = decode(get('k'), 63);
+  // WPA2 passphrases are 8–63 characters; anything else cannot be joined.
+  const hotspot = ssid && passphrase && passphrase.length >= 8 ? { ssid, passphrase } : undefined;
+  return hotspot ? { hosts, port, name, hotspot } : { hosts, port, name };
 }
 
 /** Parses route params from a `fileora://handoff?...` deep link (e.g. scanned with the system camera). */
-export function parsePairingParams(params: { h?: string | string[]; p?: string | string[]; n?: string | string[] }): HandoffTarget | null {
+export function parsePairingParams(params: Partial<Record<'h' | 'p' | 'n' | 's' | 'k', string | string[]>>): HandoffTarget | null {
   const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
   // Route params arrive already decoded; re-encode the name so fromParams can decode it uniformly.
   return fromParams((key) => {
-    const value = first(params[key as 'h' | 'p' | 'n']);
-    return key === 'n' && value !== undefined ? encodeURIComponent(value) : value;
+    const value = first(params[key as 'h' | 'p' | 'n' | 's' | 'k']);
+    return (key === 'n' || key === 's' || key === 'k') && value !== undefined ? encodeURIComponent(value) : value;
   });
 }
 

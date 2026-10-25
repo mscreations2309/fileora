@@ -135,11 +135,11 @@ function EmulatorNote({ receiving }: { receiving: boolean }) {
 
 function ListeningCard() {
   const theme = useTheme();
-  const { addresses, port, destination, message, emulator } = useHandoff();
-  const payload = addresses.length && port ? buildPairingPayload({ hosts: addresses, port, name: deviceName() }) : null;
+  const { addresses, port, destination, message, emulator, hotspot, hotspotError } = useHandoff();
+  const payload = addresses.length && port ? buildPairingPayload({ hosts: addresses, port, name: deviceName(), hotspot: hotspot ?? undefined }) : null;
   return (
     <>
-      {emulator ? <EmulatorNote receiving /> : null}
+      {emulator && !hotspot ? <EmulatorNote receiving /> : null}
       <Animated.View entering={FadeInDown.springify().damping(16)}>
         <Card style={{ padding: theme.spacing.lg, gap: theme.spacing.md, alignItems: 'center' }} elevation="medium">
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm, alignItems: 'center', alignSelf: 'flex-start' }}>
@@ -174,6 +174,14 @@ function ListeningCard() {
             </AppText>
           )}
           <AppText variant="helper" tone="tertiary" style={{ alignSelf: 'stretch' }}>{`Files will be saved to ${destination?.label ?? 'the chosen folder'}. You approve every transfer.`}</AppText>
+          {hotspot ? (
+            <View style={{ alignSelf: 'stretch', flexDirection: 'row', gap: theme.spacing.sm, alignItems: 'center', padding: theme.spacing.sm, borderRadius: theme.radii.md, backgroundColor: theme.colors.primarySubtle }}>
+              <Icon name="access-point-network" color={theme.colors.primary} />
+              <AppText variant="helper" style={{ flex: 1 }}>{`Direct link on: “${hotspot.ssid}”. The other phone joins it by scanning — no shared Wi-Fi or internet needed.`}</AppText>
+            </View>
+          ) : hotspotError ? (
+            <AppText variant="helper" tone="warning" style={{ alignSelf: 'stretch' }}>{`Direct link unavailable: ${hotspotError}. Both phones need to be on the same Wi-Fi.`}</AppText>
+          ) : null}
           {message ? <AppText variant="helper" tone="danger">{message}</AppText> : null}
         </Card>
       </Animated.View>
@@ -268,7 +276,7 @@ function SendPanel({ initialTarget }: { initialTarget: HandoffTarget | null }) {
   const typed = parsePairingText(address);
   const target = scanned ?? typed;
   const hasFiles = state.role === 'send' && state.outgoing.length > 0;
-  const onlyEmulator = target ? target.hosts.every(isEmulatorAddress) : false;
+  const onlyEmulator = target && !target.hotspot ? target.hosts.every(isEmulatorAddress) : false;
 
   const addFiles = async () => {
     const picked = await File.pickFileAsync({ multipleFiles: true }).catch(() => null);
@@ -280,10 +288,10 @@ function SendPanel({ initialTarget }: { initialTarget: HandoffTarget | null }) {
   const onScanned = (next: HandoffTarget) => {
     setScanned(next);
     // Files already chosen: connect straight away. The receiver still confirms the 6-digit code before anything is sent.
-    if (hasFiles && !next.hosts.every(isEmulatorAddress)) send(next);
+    if (hasFiles && (next.hotspot || !next.hosts.every(isEmulatorAddress))) void send(next);
   };
 
-  const busy = state.phase === 'preparing' || state.phase === 'pairing' || state.phase === 'transferring';
+  const busy = state.phase === 'joining' || state.phase === 'preparing' || state.phase === 'pairing' || state.phase === 'transferring';
   return (
     <View style={{ gap: theme.spacing.md }}>
       <Card style={{ padding: theme.spacing.md, gap: theme.spacing.xs }}>
@@ -328,10 +336,18 @@ function SendPanel({ initialTarget }: { initialTarget: HandoffTarget | null }) {
       {onlyEmulator ? <EmulatorNote receiving={false} /> : null}
 
       {!busy ? (
-        <Button label="Connect and send" icon="send-outline" disabled={!target || !hasFiles} onPress={() => target && send(target)} />
+        <Button label="Connect and send" icon="send-outline" disabled={!target || !hasFiles} onPress={() => target && void send(target)} />
       ) : (
         <Button label="Cancel" variant="secondary" onPress={cancelSending} />
       )}
+      {state.phase === 'joining' ? (
+        <Animated.View entering={FadeIn}>
+          <Card style={{ padding: theme.spacing.md, flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' }}>
+            <Icon name="access-point-network" color={theme.colors.primary} />
+            <AppText variant="body" style={{ flex: 1 }}>{`Connecting directly to ${state.target?.name ?? 'the other phone'}… Tap “Connect” if Android asks.`}</AppText>
+          </Card>
+        </Animated.View>
+      ) : null}
       {state.phase === 'preparing' ? (
         <Animated.View entering={FadeIn}>
           <AppText variant="helper" tone="secondary">
@@ -352,7 +368,7 @@ function SendPanel({ initialTarget }: { initialTarget: HandoffTarget | null }) {
               Check that both devices are on the same Wi-Fi and the other device still shows “Ready to receive”. Guest or public Wi-Fi often stops devices from reaching each other.
             </AppText>
           ) : null}
-          {state.target && state.phase !== 'rejected' ? <Button label="Retry (resumes partial files)" icon="refresh" onPress={() => state.target && send(state.target, true)} /> : null}
+          {state.target && state.phase !== 'rejected' ? <Button label="Retry (resumes partial files)" icon="refresh" onPress={() => state.target && void send(state.target, true)} /> : null}
         </Card>
       ) : null}
       {state.phase === 'completed' ? (
@@ -371,7 +387,7 @@ export function HandoffScreen() {
   const insets = useSafeAreaInsets();
   const role = useHandoff((s) => s.role);
   const phase = useHandoff((s) => s.phase);
-  const params = useLocalSearchParams<{ h?: string; p?: string; n?: string }>();
+  const params = useLocalSearchParams<{ h?: string; p?: string; n?: string; s?: string; k?: string }>();
   // Opened from a scanned pairing link (e.g. with the system camera): go straight to Send with that receiver.
   const [linkTarget] = useState(() => parsePairingParams(params));
   const [tab, setTab] = useState<'send' | 'receive'>(role === 'receive' && !linkTarget ? 'receive' : 'send');

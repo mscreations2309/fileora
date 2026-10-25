@@ -44,7 +44,12 @@ import kotlin.concurrent.thread
  * Integrity: every file is hashed (SHA-256) by the sender; the receiver stages data in app storage and
  * only reports a file as received after its hash matches. Partial files are kept so a retry resumes.
  */
-internal class Handoff(private val context: Context, private val emit: (Map<String, Any?>) -> Unit) {
+internal class Handoff(
+  private val context: Context,
+  /** When set (sender joined the receiver's hotspot), sockets are routed over that network. */
+  private val route: () -> android.net.Network? = { null },
+  private val emit: (Map<String, Any?>) -> Unit
+) {
   private val random = SecureRandom()
   private val receivers = ConcurrentHashMap<String, Receiver>()
   private val senders = ConcurrentHashMap<String, Sender>()
@@ -385,6 +390,7 @@ internal class Handoff(private val context: Context, private val emit: (Map<Stri
         val s = Socket()
         socket = s
         try {
+          route()?.bindSocket(s)
           s.connect(InetSocketAddress(candidate, port), if (hosts.size > 1) 4_000 else 10_000)
           return s
         } catch (e: Exception) {

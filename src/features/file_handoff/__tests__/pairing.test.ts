@@ -7,6 +7,14 @@ describe('pairing payloads', () => {
     expect(parsePairingText(payload)).toEqual({ hosts: ['192.168.1.20', '10.0.0.5'], port: 40123, name: 'Asha’s Pixel & Co' });
   });
 
+  it('carries hotspot credentials so the sender can join without shared Wi-Fi', () => {
+    const target = { hosts: ['192.168.49.1'], port: 40123, name: 'Pixel', hotspot: { ssid: 'AndroidShare_1234', passphrase: 'p@ss word&8=' } };
+    expect(parsePairingText(buildPairingPayload(target))).toEqual(target);
+    expect(parsePairingParams({ h: '192.168.49.1', p: '40123', s: 'AndroidShare_1234', k: 'p@ss word&8=' })?.hotspot).toEqual({ ssid: 'AndroidShare_1234', passphrase: 'p@ss word&8=' });
+    // Too-short passphrases cannot be valid WPA2 keys, so the hotspot part is ignored.
+    expect(parsePairingText('fileora://handoff?h=192.168.49.1&p=40123&s=x&k=short')?.hotspot).toBeUndefined();
+  });
+
   it('accepts typed addresses', () => {
     expect(parsePairingText(' 192.168.1.20:40123 ')).toEqual({ hosts: ['192.168.1.20'], port: 40123 });
     expect(parsePairingText('192.168.1.20 40123')).toEqual({ hosts: ['192.168.1.20'], port: 40123 });
