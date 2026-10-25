@@ -91,6 +91,8 @@ type FileoraStorageEvents = {
 declare class FileoraStorageNativeModule extends NativeModule<FileoraStorageEvents> {
   getAllFilesAccessStatus(): NativeAllFilesAccessStatus;
   getAppStorageRoots(): { internalFiles: string; externalFiles: string | null };
+  /** Creates a folder inside the app's own storage; returns whether it exists afterwards. */
+  ensureAppDirectory(uri: string): boolean;
   getStorageVolumes(): Promise<NativeVolume[]>;
   resolveTreeRoot(treeUri: string): Promise<NativeEntry>;
   listChildren(uri: string): Promise<NativeEntry[]>;

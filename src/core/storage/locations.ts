@@ -227,7 +227,11 @@ export function trashDirectoryUri(): string {
   const roots = FileoraStorage?.getAppStorageRoots();
   const base = roots?.externalFiles ?? Paths.document.uri;
   const directory = new Directory(base, '.fileora-trash');
-  if (!directory.exists) directory.create({ intermediates: true, idempotent: true });
+  if (!directory.exists) {
+    // expo-file-system may not be allowed to write to app-specific external storage; the native module is.
+    if (FileoraStorage) FileoraStorage.ensureAppDirectory(directory.uri);
+    else directory.create({ intermediates: true, idempotent: true });
+  }
   return directory.uri;
 }
 

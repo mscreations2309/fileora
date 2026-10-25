@@ -92,6 +92,15 @@ class FileoraStorageModule : Module() {
       )
     }
 
+    /** Creates a folder inside Fileora's own app storage (e.g. Trash), which expo-file-system may not write to. */
+    Function("ensureAppDirectory") { uri: String ->
+      val target = File(Uri.parse(uri).path ?: throw InvalidNameException(uri)).canonicalFile
+      val allowed = listOfNotNull(context.filesDir, context.getExternalFilesDir(null)).map { it.canonicalFile }
+      if (allowed.none { target.path == it.path || target.path.startsWith(it.path + File.separator) }) throw AccessDeniedException("outside app storage")
+      target.mkdirs()
+      target.isDirectory
+    }
+
     AsyncFunction("getStorageVolumes") Coroutine { ->
       withContext(Dispatchers.IO) { storageVolumes() }
     }
