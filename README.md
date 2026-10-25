@@ -25,7 +25,7 @@
 | Expiry radar: labelled date extraction with source text, confirm/correct, reminders, calendar, renewal linking | Done |
 | Change radar: text/JSON/CSV/OCR-PDF/Office/image comparison, folder snapshots, exportable reports | Done |
 | Relationship graph: explained suggestions (identifiers, names, workspaces, timing), manual links, zoomable graph and list view | Done |
-| Smart handoff: LAN transfer with ECDH pairing code, AES-GCM, SHA-256 verification, resume, history | Done (Android) |
+| Smart handoff: LAN transfer with QR pairing, ECDH pairing code, AES-GCM, SHA-256 verification, resume, history | Done (Android) |
 
 ## Requirements
 
