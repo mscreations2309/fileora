@@ -2,6 +2,18 @@
 
 **Your files. Your control.** A privacy-first file manager for Android and iOS.
 
+## Download (Android)
+
+Get the latest APK from **[Releases](https://github.com/mscreations2309/fileora/releases/latest)**:
+
+| File | For |
+| --- | --- |
+| `Fileora-<version>-arm64.apk` | Almost every phone from the last ~8 years — pick this one |
+| `Fileora-<version>-armv7.apk` | Older 32-bit phones |
+| `Fileora-<version>-x86_64.apk` | Android emulators |
+
+Open the file on your phone and allow installing from that source when Android asks. Text recognition and QR scanning use Google Play services.
+
 - Develop and build from a short path outside OneDrive (see below).
 - Package / bundle identifier: `com.fileora.app`
 - Stack: Expo SDK 58 · React Native 0.88 (New Architecture, Hermes) · TypeScript (strict) · Expo Router · SQLite · Zustand · FlashList
