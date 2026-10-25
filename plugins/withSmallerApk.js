@@ -47,8 +47,13 @@ function withSplitsAndSubstitution(config) {
 
 function withModelDependencies(config) {
   return withAndroidManifest(config, (mod) => {
+    const manifest = mod.modResults.manifest;
+    manifest.$['xmlns:tools'] = manifest.$['xmlns:tools'] ?? 'http://schemas.android.com/tools';
     const application = AndroidConfig.Manifest.getMainApplicationOrThrow(mod.modResults);
-    AndroidConfig.Manifest.addMetaDataItemToMainApplication(application, 'com.google.mlkit.vision.DEPENDENCIES', 'ocr,barcode');
+    // expo-camera declares `barcode_ui`; ours supersedes it with the full list, so keep that model too.
+    AndroidConfig.Manifest.addMetaDataItemToMainApplication(application, 'com.google.mlkit.vision.DEPENDENCIES', 'ocr,barcode,barcode_ui');
+    const item = application['meta-data']?.find((m) => m.$['android:name'] === 'com.google.mlkit.vision.DEPENDENCIES');
+    if (item) item.$['tools:replace'] = 'android:value';
     return mod;
   });
 }
