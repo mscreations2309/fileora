@@ -46,15 +46,27 @@
   .pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: inherit; animation: ping 1.6s infinite; }
 
   /* App */
-  #app { display: grid; grid-template-columns: 250px 1fr; height: 100%; }
+  #app { display: grid; grid-template-columns: 290px 1fr; height: 100%; }
   aside { background: var(--bg2); border-right: 1px solid var(--border); padding: 18px 12px; display: flex; flex-direction: column; gap: 4px; overflow: auto; }
   .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 18px; font-weight: 700; font-size: 16px; }
   .brand .logo { width: 34px; height: 34px; border-radius: 11px; margin: 0; box-shadow: none; }
   .brand .logo svg { width: 20px; height: 20px; }
   .nav-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text3); padding: 10px 10px 6px; }
-  .root { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: var(--text2); text-align: left; width: 100%; transition: background .15s, color .15s; }
-  .root:hover { background: var(--sunken); color: var(--text); }
-  .root.active { background: var(--primary-subtle); color: var(--primary); font-weight: 600; }
+  .tree { display: grid; gap: 1px; padding-bottom: 12px; }
+  .tnode { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 0; border-radius: 9px; color: var(--text2); cursor: pointer; white-space: nowrap; user-select: none; transition: background .12s, color .12s; animation: fade .2s ease both; }
+  .tnode:hover { background: var(--sunken); color: var(--text); }
+  .tnode.active { background: var(--primary-subtle); color: var(--primary); font-weight: 600; }
+  .tnode.onpath:not(.active) { color: var(--text); }
+  .tnode .lbl { overflow: hidden; text-overflow: ellipsis; }
+  .tnode svg { width: 18px; height: 18px; }
+  .tnode .fold { color: #6D5DF6; display: grid; }
+  .tnode.root-node .fold { color: var(--primary); }
+  .twist { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; flex: none; color: var(--text3); transition: transform .18s ease, background .12s; }
+  .twist:hover { background: var(--border); color: var(--text); }
+  .twist.open { transform: rotate(90deg); }
+  .twist.none { visibility: hidden; }
+  .twist.busy svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .status { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); flex: none; }
   .dot.live { background: var(--success); box-shadow: 0 0 0 4px rgba(18, 161, 80, .15); }
@@ -139,6 +151,8 @@
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"/></symbol>
   <symbol id="i-open" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7ZM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7Z"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.3 6.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4l-4.6 4.6a1 1 0 1 1-1.4-1.4l3.9-3.9-3.9-3.9a1 1 0 0 1 0-1.4Z"/></symbol>
+  <symbol id="i-spin" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 0 8 8h-2a6 6 0 1 1-6-6V4Z"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M11 20V7.83l-5.59 5.58L4 12l8-8 8 8-1.41 1.41L13 7.83V20h-2Z"/></symbol>
 </svg>
 
@@ -164,7 +178,7 @@
   <aside>
     <div class="brand"><div class="logo"><svg><use href="#i-logo"/></svg></div>Fileora Web</div>
     <div class="nav-label">On your phone</div>
-    <div id="roots"></div>
+    <div id="roots" class="tree" role="tree" aria-label="Folders on your phone"></div>
     <div class="status"><span class="dot" id="live-dot"></span><span id="live-text">Connecting…</span></div>
   </aside>
   <main id="main">
@@ -309,7 +323,7 @@
     events?.close();
     events = new EventSource(`/api/events?t=${encodeURIComponent(state.token)}`);
     events.addEventListener('hello', () => { setLive('live'); retry = 1000; });
-    events.addEventListener('changed', () => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => load(true), 250); });
+    events.addEventListener('changed', () => { clearTimeout(reloadTimer); reloadTimer = setTimeout(() => { load(true); refreshTree(); }, 250); });
     events.onerror = () => {
       setLive('down'); events.close();
       setTimeout(async () => {
@@ -332,15 +346,89 @@
       connectEvents();
     } catch (e) { if (state.token) { toast(e.message, true); setLive('down'); setTimeout(boot, 3000); } }
   }
+  // ---------- folder tree (sidebar) ----------
+  // Nodes are keyed by their position (root › … › folder), not by URI: the same folder can appear both
+  // as a location (e.g. "Downloads") and inside "Internal storage", and each place keeps its own name and state.
+  // node: { key, uri, name, parent (key|null), children: null (not loaded) | key[], expanded, loading, empty }
+  const tree = new Map();
+  const keyOf = (parentKey, uri) => (parentKey ? `${parentKey}>${uri}` : `root:${uri}`);
+  function node(parentKey, uri, name) {
+    const key = keyOf(parentKey, uri);
+    let n = tree.get(key);
+    if (!n) { n = { key, uri, name, parent: parentKey, children: null, expanded: false, loading: false, empty: false }; tree.set(key, n); }
+    else if (parentKey) n.name = name;
+    return n;
+  }
+  function pathKeys() {
+    const keys = []; let k = null;
+    for (const p of state.path) { k = keyOf(k, p.uri); keys.push(k); }
+    return keys;
+  }
+  function setChildren(parentKey, entries) {
+    const parent = tree.get(parentKey); if (!parent) return;
+    const dirs = entries.filter((e) => e.isDirectory).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    parent.children = dirs.map((d) => { const c = node(parentKey, d.uri, d.name); c.empty = d.childCount === 0; return c.key; });
+  }
+  function chainTo(key) {
+    const chain = []; let n = tree.get(key);
+    while (n) { chain.unshift({ uri: n.uri, name: n.name }); n = n.parent ? tree.get(n.parent) : null; }
+    return chain;
+  }
+  /** Makes sure the nodes for the current path exist (e.g. after navigating in the file list). */
+  function syncPath() {
+    let k = null;
+    state.path.forEach((p) => { const n = node(k, p.uri, p.name); k = n.key; });
+  }
   function renderRoots() {
-    $('roots').innerHTML = state.roots.map((r, i) => `<button class="root" data-i="${i}">${icon(r.icon === 'phone' ? 'phone' : 'folder')}<span>${esc(r.name)}</span></button>`).join('') || '<p class="faint" style="padding:10px">No storage shared. Grant access in the Fileora app.</p>';
-    markRoot();
+    state.roots.forEach((r) => node(null, r.uri, r.name));
+    syncPath();
+    const keys = pathKeys();
+    // Keep the open folder's ancestors expanded so you always see where you are.
+    keys.slice(0, -1).forEach((k) => { const n = tree.get(k); if (n) n.expanded = true; });
+    const onPath = new Set(keys);
+    const here = keys[keys.length - 1];
+    const rows = [];
+    const walk = (key, depth) => {
+      const n = tree.get(key); if (!n) return;
+      const known = n.children !== null;
+      const twist = n.loading ? 'busy' : (known && n.children.length === 0) || (!known && n.empty) ? 'none' : n.expanded ? 'open' : '';
+      const isPhone = depth === 0 && state.roots.find((r) => r.uri === n.uri)?.icon === 'phone';
+      rows.push(`<div class="tnode${depth === 0 ? ' root-node' : ''}${key === here ? ' active' : onPath.has(key) ? ' onpath' : ''}" role="treeitem" aria-level="${depth + 1}" aria-expanded="${n.expanded}" data-key="${esc(key)}" style="padding-left:${4 + depth * 16}px" title="${esc(n.name)}"><button class="twist ${twist}" data-twist aria-label="${n.expanded ? 'Collapse' : 'Expand'} ${esc(n.name)}">${icon(n.loading ? 'spin' : 'chev')}</button><span class="fold">${icon(isPhone ? 'phone' : 'folder')}</span><span class="lbl">${esc(n.name)}</span></div>`);
+      if (n.expanded && n.children) n.children.slice(0, 500).forEach((c) => walk(c, depth + 1));
+    };
+    state.roots.forEach((r) => walk(keyOf(null, r.uri), 0));
+    $('roots').innerHTML = rows.join('') || '<p class="faint" style="padding:10px">No storage shared. Grant access in the Fileora app.</p>';
+    const active = $('roots').querySelector('.tnode.active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
   }
-  function markRoot() {
-    const base = state.path[0]?.uri;
-    document.querySelectorAll('.root').forEach((b) => b.classList.toggle('active', state.roots[b.dataset.i]?.uri === base));
+  async function loadChildren(n) {
+    n.loading = true; renderRoots();
+    try { const data = await api(`/api/list?uri=${encodeURIComponent(n.uri)}`); setChildren(n.key, data.entries || []); }
+    catch (e) { n.expanded = false; toast(e.message, true); }
+    finally { n.loading = false; renderRoots(); }
   }
-  $('roots').onclick = (e) => { const b = e.target.closest('.root'); if (!b) return; const r = state.roots[b.dataset.i]; state.path = [{ uri: r.uri, name: r.name }]; load(); };
+  async function toggle(n) {
+    n.expanded = !n.expanded;
+    if (n.expanded && n.children === null) await loadChildren(n); else renderRoots();
+  }
+  /** Re-reads expanded folders so the tree follows changes made on the phone or by another browser. */
+  async function refreshTree() {
+    const here = pathKeys().pop();
+    const open = [...tree.values()].filter((n) => n.expanded && n.children !== null && n.key !== here).slice(0, 12);
+    await Promise.all(open.map(async (n) => {
+      try { const d = await api(`/api/list?uri=${encodeURIComponent(n.uri)}`); setChildren(n.key, d.entries || []); } catch { /* removed or no longer shared */ }
+    }));
+    renderRoots();
+  }
+  $('roots').addEventListener('click', (e) => {
+    const row = e.target.closest('.tnode'); if (!row) return;
+    const n = tree.get(row.dataset.key); if (!n) return;
+    if (e.target.closest('[data-twist]')) { toggle(n); return; }
+    state.path = chainTo(n.key); state.filter = ''; $('filter').value = '';
+    n.expanded = true;
+    load();
+  });
+  function markRoot() { renderRoots(); }
 
   async function load(quiet) {
     const folder = current();
@@ -351,6 +439,8 @@
       const data = await api(`/api/list?uri=${encodeURIComponent(folder.uri)}`);
       if (current() !== folder) return;
       state.entries = data.entries || [];
+      syncPath();
+      setChildren(pathKeys().pop(), state.entries);
       const alive = new Set(state.entries.map((e) => e.uri));
       state.selected.forEach((u) => { if (!alive.has(u)) state.selected.delete(u); });
     } catch (e) {
@@ -386,7 +476,7 @@
         <td><input type="checkbox" class="pick" ${state.selected.has(e.uri) ? 'checked' : ''} aria-label="Select ${esc(e.name)}"></td>
         <td><div class="name"><div class="ico" style="background:${k.color}1F;color:${k.color}">${icon(k.icon)}</div><span title="${esc(e.name)}">${esc(e.name)}</span></div></td>
         <td class="num hide-sm">${fmtDate(e.modifiedAt)}</td>
-        <td class="num">${e.isDirectory ? (e.childCount != null ? `${e.childCount} items` : '—') : fmtSize(e.size)}</td>
+        <td class="num">${e.isDirectory ? (e.childCount != null ? `${e.childCount} ${e.childCount === 1 ? 'item' : 'items'}` : '—') : fmtSize(e.size)}</td>
         <td><div class="acts">${e.isDirectory ? '' : `<button class="icon-btn" data-act="open" title="Open in new tab">${icon('open')}</button><button class="icon-btn" data-act="download" title="Download">${icon('download')}</button>`}<button class="icon-btn" data-act="rename" title="Rename (F2)">${icon('rename')}</button><button class="icon-btn danger" data-act="delete" title="Move to Trash (Delete)">${icon('delete')}</button></div></td></tr>`;
     }).join('')}</tbody></table>`;
     $('all').checked = items.length > 0 && items.every((e) => state.selected.has(e.uri));
