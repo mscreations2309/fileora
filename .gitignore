@@ -39,3 +39,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# signing material
+*.keystore
+!debug.keystore
+
+# local tool settings
+.claude/
+
+# native module build output
+modules/*/android/build/
+modules/*/android/.cxx/

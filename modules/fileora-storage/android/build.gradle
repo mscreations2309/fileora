@@ -1,0 +1,23 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.fileora.storage'
+version = '0.1.0'
+
+android {
+  namespace "com.fileora.storage"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+}
+
+dependencies {
+  implementation 'androidx.core:core:1.13.1'
+  // On-device OCR with the bundled Latin model: works offline, nothing is sent to Google.
+  // Play services build: the OCR model is shared and downloaded by Google Play services instead of
+  // shipping ~11 MB per CPU architecture inside the APK.
+  implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.1'
+}

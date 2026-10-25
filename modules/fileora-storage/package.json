@@ -1,0 +1,7 @@
+{
+  "name": "fileora-storage",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fileora native storage helpers (Android SAF, batched listing, streamed copy and hashing)",
+  "main": "index.ts"
+}
