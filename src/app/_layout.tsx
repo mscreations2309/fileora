@@ -18,6 +18,11 @@ import { ToastHost } from '@/shared/components/overlays';
 
 void SplashScreen.preventAutoHideAsync();
 
+// Screens opened directly (links, QR codes, notifications) keep Home underneath, so Back always leads to the file manager.
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
+
 // Expiry reminders should be visible even while Fileora is open.
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
