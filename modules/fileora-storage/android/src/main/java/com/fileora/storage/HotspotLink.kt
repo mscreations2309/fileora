@@ -114,7 +114,7 @@ internal class HotspotLink(private val context: Context) {
   private fun interfaceAddresses(matches: (String) -> Boolean): List<String> =
     NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
       .filter { runCatching { it.isUp && !it.isLoopback && matches(it.name) }.getOrDefault(false) }
-      .flatMap { iface -> iface.inetAddresses.toList().filterIsInstance<Inet4Address>().filter { it.isSiteLocalAddress }.mapNotNull { it.hostAddress } }
+      .flatMap { iface -> iface.inetAddresses.toList().filterIsInstance<Inet4Address>().filter { !it.isLoopbackAddress && !it.isLinkLocalAddress }.mapNotNull { it.hostAddress } }
 
   // endregion
 

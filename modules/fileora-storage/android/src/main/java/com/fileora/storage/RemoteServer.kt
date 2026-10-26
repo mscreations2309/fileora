@@ -127,11 +127,22 @@ internal class RemoteServer(private val context: Context, private val emit: (Map
     }
   }
 
-  fun addresses(): List<String> =
-    NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
+  /**
+   * Addresses a laptop can use, the phone's main network first. Any unicast IPv4 counts: many company
+   * networks use ranges outside the RFC 1918 "private" blocks (e.g. 172.1.x.x), so a site-local filter
+   * would hide the one address that actually works.
+   */
+  fun addresses(): List<String> {
+    val usable = { a: java.net.InetAddress -> a is Inet4Address && !a.isLoopbackAddress && !a.isLinkLocalAddress && !a.isAnyLocalAddress && !a.isMulticastAddress }
+    val primary = runCatching {
+      val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+      manager.getLinkProperties(manager.activeNetwork)?.linkAddresses.orEmpty().map { it.address }.filter(usable).mapNotNull { it.hostAddress }
+    }.getOrDefault(emptyList())
+    val others = NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
       .filter { runCatching { it.isUp && !it.isLoopback }.getOrDefault(false) }
-      .flatMap { iface -> iface.inetAddresses.toList().filterIsInstance<Inet4Address>().filter { it.isSiteLocalAddress }.mapNotNull { it.hostAddress } }
-      .distinct()
+      .flatMap { iface -> iface.inetAddresses.toList().filter(usable).mapNotNull { it.hostAddress } }
+    return (primary + others).distinct()
+  }
 
   // endregion
 
