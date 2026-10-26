@@ -3,7 +3,7 @@
     "name": "Fileora",
     "slug": "fileora",
     "scheme": "fileora",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,7 +24,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "allowBackup": false
+      "allowBackup": false,
+      "versionCode": 2
     },
     "plugins": [
       "expo-router",
@@ -54,7 +55,11 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": ["arm64-v8a", "armeabi-v7a", "x86_64"],
+            "buildArchs": [
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86_64"
+            ],
             "useLegacyPackaging": true,
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
