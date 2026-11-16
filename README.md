@@ -66,3 +66,35 @@ npm start                # Metro for the development build
 
 Native folders (`android/`, `ios/`) are generated and git-ignored. Change native behaviour through
 `app.json`, `plugins/`, or `modules/fileora-storage`.
+
+---
+
+## Contributing
+
+Contributions are welcome!
+
+### How to contribute
+
+1. Fork this repository.
+2. Create a feature branch.
+3. Make your changes and test them.
+4. Submit a Pull Request with a clear description.
+
+### Before submitting a Pull Request
+
+Run the following checks:
+
+```bash
+npm run typecheck
+npx eslint .
+npm test
+npm run doctor
+```
+
+Please include:
+- A summary of your changes.
+- Testing results.
+- Screenshots for UI changes, where applicable.
+
+Thank you for contributing to Fileora!
+
