@@ -17,7 +17,7 @@ Open the file on your phone and allow installing from that source when Android a
 - Develop and build from a short path outside OneDrive (see below).
 - Package / bundle identifier: `com.fileora.app`
 - Stack: Expo SDK 58 · React Native 0.88 (New Architecture, Hermes) · TypeScript (strict) · Expo Router · SQLite · Zustand · FlashList
-- Docs: [Architecture](docs/ARCHITECTURE.md) · [Platform limitations](docs/PLATFORM_LIMITATIONS.md) · [Validation checklist](docs/VALIDATION.md) · [Release](docs/RELEASE.md)
+- Docs: [Architecture](docs/ARCHITECTURE.md) · [Privacy](docs/PRIVACY.md) · [Platform limitations](docs/PLATFORM_LIMITATIONS.md) · [Validation checklist](docs/VALIDATION.md) · [Release](docs/RELEASE.md)
 
 ## Status
 
